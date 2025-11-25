@@ -9,6 +9,9 @@ app.secret_key = 'shopping_secret_key'
 
 # Database configuration - try multiple environment variable names
 database_url = (
+    os.environ.get('P3_database_POSTGRES_URL') or 
+    os.environ.get('P3_database_DATABASE_URL') or
+    os.environ.get('P3_database_POSTGRES_PRISMA_URL') or
     os.environ.get('POSTGRES_URL') or 
     os.environ.get('DATABASE_URL') or
     os.environ.get('POSTGRES_PRISMA_URL')
