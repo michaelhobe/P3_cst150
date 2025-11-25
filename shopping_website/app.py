@@ -71,13 +71,63 @@ def initialize_database():
     except Exception as e:
         print(f"Database initialization error: {e}")
 
-# Initialize database on startup (only if Postgres is configured)
-initialize_database()
+# Don't call initialize_database() at module level - it won't work in Vercel's serverless environment
+
+@app.route('/init')
+def init_db():
+    """Manual database initialization endpoint"""
+    try:
+        if not os.environ.get('POSTGRES_URL'):
+            return jsonify({'error': 'No database configured'}), 500
+        
+        # Create all tables
+        db.create_all()
+        
+        # Check if products already exist
+        existing_count = Product.query.count()
+        if existing_count > 0:
+            return jsonify({
+                'status': 'already_initialized',
+                'product_count': existing_count
+            })
+        
+        # Load products from JSON file
+        with open('products.json', 'r') as f:
+            products_data = json.load(f)
+        
+        # Add all products to database
+        for category, products in products_data.items():
+            for product_data in products:
+                product = Product(
+                    id=product_data['id'],
+                    name=product_data['name'],
+                    description=product_data.get('description', ''),
+                    cost_price=product_data['cost_price'],
+                    sell_price=product_data['sell_price'],
+                    category=product_data['category']
+                )
+                db.session.add(product)
+        
+        db.session.commit()
+        product_count = Product.query.count()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Database initialized with {product_count} products'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/')
 def index():
     """Display all products organized by category"""
     try:
+        # Auto-initialize database if empty (first request)
+        if Product.query.count() == 0:
+            initialize_database()
+        
         # Get all products from database
         all_products = Product.query.all()
         
