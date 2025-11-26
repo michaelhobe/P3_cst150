@@ -67,13 +67,22 @@ def seed_products():
 def init_db():
     """Manual database initialization endpoint"""
     try:
-        # Check for any Postgres environment variable
-        db_url = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
+        # Check for any Postgres environment variable (same as main app config)
+        db_url = (
+            os.environ.get('P3_database_POSTGRES_URL') or 
+            os.environ.get('P3_database_DATABASE_URL') or
+            os.environ.get('P3_database_POSTGRES_PRISMA_URL') or
+            os.environ.get('POSTGRES_URL') or 
+            os.environ.get('DATABASE_URL') or
+            os.environ.get('POSTGRES_PRISMA_URL')
+        )
         if not db_url:
             # Return diagnostic info
             return jsonify({
                 'error': 'No database configured',
                 'env_vars': {
+                    'P3_database_POSTGRES_URL': 'set' if os.environ.get('P3_database_POSTGRES_URL') else 'not set',
+                    'P3_database_DATABASE_URL': 'set' if os.environ.get('P3_database_DATABASE_URL') else 'not set',
                     'POSTGRES_URL': 'set' if os.environ.get('POSTGRES_URL') else 'not set',
                     'DATABASE_URL': 'set' if os.environ.get('DATABASE_URL') else 'not set',
                     'app_db_uri': app.config.get('SQLALCHEMY_DATABASE_URI', 'not set')[:50]
