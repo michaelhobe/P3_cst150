@@ -250,7 +250,7 @@ def checkout():
             flash(f'Error processing your order: {str(e)}')
             return redirect(url_for('checkout'))
     
-    return render_template('vercel_checkout.html')
+    return render_template('checkout.html')
 
 @app.route('/confirmation')
 def confirmation():
